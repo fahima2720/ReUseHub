@@ -87,14 +87,6 @@ function AuthPage() {
       </div>
     );
 
-  const F = ({ name, label, type = "text", ...rest }: { name: string; label: string; type?: string; autoComplete?: string; required?: boolean; placeholder?: string }) => (
-    <div className="space-y-1.5">
-      <Label htmlFor={name}>{label}</Label>
-      <Input id={name} name={name} type={type} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `${name}-err` : undefined} {...rest} />
-      {errors[name] && <p id={`${name}-err`} className="text-xs text-destructive">{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <div className="container-page max-w-md py-12">
       <div className="rounded-xl border bg-card p-6 shadow-card sm:p-8">
@@ -103,15 +95,15 @@ function AuthPage() {
           {mode === "signup" ? "Sell or give away items in minutes." : "Good to see you again."}
         </p>
         <form onSubmit={onSubmit} noValidate className="mt-6 space-y-4">
-          {mode === "signup" && <F name="full_name" label="Full name" autoComplete="name" required />}
-          <F name="email" label="Email" type="email" autoComplete="email" required />
+          {mode === "signup" && <Field errors={errors} name="full_name" label="Full name" autoComplete="name" required />}
+          <Field errors={errors} name="email" label="Email" type="email" autoComplete="email" required />
           {mode === "signup" && (
             <>
-              <F name="phone" label="Phone number" type="tel" autoComplete="tel" required placeholder="01XXXXXXXXX" />
-              <F name="location" label="Location (optional)" autoComplete="address-level2" placeholder="e.g. Mirpur, Dhaka" />
+              <Field errors={errors} name="phone" label="Phone number" type="tel" autoComplete="tel" required placeholder="01XXXXXXXXX" />
+              <Field errors={errors} name="location" label="Location (optional)" autoComplete="address-level2" placeholder="e.g. Mirpur, Dhaka" />
             </>
           )}
-          <F name="password" label="Password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required />
+          <Field errors={errors} name="password" label="Password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required />
           {mode === "signup" && <p className="text-xs text-muted-foreground">At least 8 characters with a letter and a number.</p>}
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
@@ -124,6 +116,16 @@ function AuthPage() {
           </Link>
         </p>
       </div>
+    </div>
+  );
+}
+
+function Field({ name, label, type = "text", errors, ...rest }: { name: string; label: string; type?: string; errors: Record<string, string>; autoComplete?: string; required?: boolean; placeholder?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={name}>{label}</Label>
+      <Input id={name} name={name} type={type} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `${name}-err` : undefined} {...rest} />
+      {errors[name] && <p id={`${name}-err`} className="text-xs text-destructive">{errors[name]}</p>}
     </div>
   );
 }
