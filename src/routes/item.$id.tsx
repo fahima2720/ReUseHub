@@ -71,7 +71,7 @@ function ItemPage() {
 
           {isOwner ? (
             <div className="flex gap-2">
-              <Button asChild><Link to="/dashboard/edit/$id" params={{ id: l.id }}>Edit listing</Link></Button>
+              <Button asChild><Link to="/edit/$id" params={{ id: l.id }}>Edit listing</Link></Button>
               <Button asChild variant="outline"><Link to="/dashboard">My listings</Link></Button>
             </div>
           ) : !l.owner_id ? null : l.status !== "available" ? (
