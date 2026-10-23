@@ -24,6 +24,8 @@ export const Route = createFileRoute("/item/$id")({
     return { meta: [{ title }, { name: "description", content: desc }, { property: "og:title", content: title }, { property: "og:description", content: desc }] };
   },
   component: ItemPage,
+  errorComponent: () => <div className="container-page py-10"><h1 className="text-xl font-bold">Couldn't load this item</h1><Button asChild variant="outline" className="mt-4"><Link to="/browse">Back to browse</Link></Button></div>,
+  notFoundComponent: () => <div className="container-page py-10"><h1 className="text-xl font-bold">Item not found</h1><Button asChild variant="outline" className="mt-4"><Link to="/browse">Back to browse</Link></Button></div>,
 });
 
 function ItemPage() {
@@ -124,10 +126,11 @@ function InquiryForm({ listingId, isFree }: { listingId: string; isFree: boolean
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     const m = msg.trim();
+    if (!user) return toast.error("Please log in to send a message.");
     if (m.length < 5 || m.length > 1000) return toast.error("Message must be 5–1000 characters.");
     setBusy(true);
     // recipient_id is overwritten by a database trigger using the listing's real owner
-    const { error } = await supabase.from("inquiries").insert({ listing_id: listingId, sender_id: user!.id, recipient_id: user!.id, message: m });
+    const { error } = await supabase.from("inquiries").insert({ listing_id: listingId, sender_id: user.id, recipient_id: user.id, message: m });
     setBusy(false);
     if (error) return toast.error(error.message.includes("own listing") ? "You can't message yourself." : error.message);
     setSent(true);
@@ -170,9 +173,10 @@ function ReportForm({ listingId }: { listingId: string }) {
       className="mt-6 space-y-2 rounded-lg border p-4"
       onSubmit={async (e) => {
         e.preventDefault();
+        if (!user) return toast.error("Please log in to report a listing.");
         if (reason.trim().length < 5) return toast.error("Please describe the problem (at least 5 characters).");
         setBusy(true);
-        const { error } = await supabase.from("reports").insert({ listing_id: listingId, reporter_id: user!.id, reason: reason.trim() });
+        const { error } = await supabase.from("reports").insert({ listing_id: listingId, reporter_id: user.id, reason: reason.trim() });
         setBusy(false);
         if (error) return toast.error(error.code === "23505" ? "You've already reported this listing." : error.message);
         setDone(true);

@@ -32,7 +32,8 @@ function Sell() {
         defaultType={type ?? "sale"}
         submitLabel="Publish listing"
         onSubmit={async ({ status: _s, ...v }) => {
-          const { data, error } = await supabase.from("listings").insert({ ...v, owner_id: user!.id }).select("id").single();
+          if (!user) throw new Error("Please log in to publish.");
+          const { data, error } = await supabase.from("listings").insert({ ...v, owner_id: user.id }).select("id").single();
           if (error) throw error;
           qc.invalidateQueries({ queryKey: ["listings"] });
           toast.success("Your listing is live.");

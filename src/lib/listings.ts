@@ -124,7 +124,10 @@ export async function validateImage(file: File): Promise<string | null> {
 }
 
 export async function uploadImage(userId: string, file: File) {
-  const ext = (await sniffImage(file))!;
+  const validationError = await validateImage(file);
+  if (validationError) throw new Error(validationError);
+  const ext = await sniffImage(file);
+  if (!ext) throw new Error("This file is not a valid image.");
   // Server-safe random filename inside the user's own folder (storage policy enforces the folder)
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from("listing-images").upload(path, file, {

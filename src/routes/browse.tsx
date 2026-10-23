@@ -40,6 +40,7 @@ function Browse() {
   const [min, setMin] = useState(s.min?.toString() ?? "");
   const [max, setMax] = useState(s.max?.toString() ?? "");
   useEffect(() => { setQ(s.q ?? ""); }, [s.q]);
+  useEffect(() => { setMin(s.min?.toString() ?? ""); setMax(s.max?.toString() ?? ""); }, [s.min, s.max]);
 
   const set = (patch: Partial<z.infer<typeof searchSchema>>) =>
     navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) });
@@ -136,7 +137,7 @@ function Browse() {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-[3/4] rounded-lg" />)}</div>
           ) : list.isError ? (
             <EmptyState title="Couldn't load items" body="Something went wrong. Please try again." />
-          ) : list.data!.rows.length === 0 ? (
+          ) : !list.data?.rows.length ? (
             <EmptyState
               title="No items match your filters"
               body="Try a different keyword, widen the price range or clear some filters."
@@ -145,7 +146,7 @@ function Browse() {
           ) : (
             <>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                {list.data!.rows.map((l) => <ListingCard key={l.id} listing={l} />)}
+                {list.data.rows.map((l) => <ListingCard key={l.id} listing={l} />)}
               </div>
               {totalPages > 1 && (
                 <nav aria-label="Pagination" className="mt-8 flex items-center justify-center gap-3">
