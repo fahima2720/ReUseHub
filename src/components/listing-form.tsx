@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
+import type { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,27 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { CONDITIONS, STATUSES, fetchCategories, uploadImage, validateImage, type ListingRow } from "@/lib/listings";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { listingSchema } from "@/lib/validation";
 
-export const listingSchema = z
-  .object({
-    title: z.string().trim().min(3, "Title must be at least 3 characters").max(100),
-    description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000),
-    category_id: z.coerce.number().int().positive("Choose a category"),
-    listing_type: z.enum(["sale", "donation"]),
-    price: z.string().optional(),
-    item_condition: z.enum(["new", "like_new", "good", "fair"], { message: "Choose a condition" }),
-    location: z.string().trim().min(2, "Location is required").max(80),
-    status: z.enum(["available", "reserved", "sold"]).optional(),
-  })
-  .transform((v, ctx) => {
-    if (v.listing_type === "donation") return { ...v, price: null };
-    const n = Number(v.price);
-    if (!v.price || !Number.isFinite(n) || n <= 0 || n > 10_000_000) {
-      ctx.addIssue({ code: "custom", path: ["price"], message: "Sale items need a price greater than 0" });
-      return z.NEVER;
-    }
-    return { ...v, price: Math.round(n * 100) / 100 };
-  });
+export { listingSchema } from "@/lib/validation";
 
 export type ListingInput = z.output<typeof listingSchema> & { image_url: string | null };
 
@@ -53,6 +35,7 @@ export function ListingForm({
   const [preview, setPreview] = useState<string | null>(initial?.image_url ?? null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
 
   const pick = async (f: File | undefined) => {
     if (!f) return;
@@ -73,10 +56,11 @@ export function ListingForm({
       return;
     }
     setErrors({});
+    if (!user) return toast.error("Please log in before publishing.");
     setBusy(true);
     try {
       let image_url = initial?.image_url ?? null;
-      if (file) image_url = await uploadImage(user!.id, file);
+      if (file) image_url = await uploadImage(user.id, file);
       await onSubmit({ ...parsed.data, image_url });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");

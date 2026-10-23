@@ -14,4 +14,8 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+  it.each(["/browse", "/auth", "/item/89652fbd-20df-454d-bf17-cc4f8a48cd54", "/sell", "/dashboard", "/inbox", "/admin", "/edit/89652fbd-20df-454d-bf17-cc4f8a48cd54"])("matches existing route %s", (path) => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes(path).at(-1)?.routeId).not.toBe(rootRouteId);
+  });
 });

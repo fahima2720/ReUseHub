@@ -28,6 +28,7 @@ function Edit() {
   const q = useQuery({ queryKey: ["listing", id], queryFn: () => fetchListing(id) });
 
   if (q.isLoading) return <div className="container-page max-w-2xl py-10"><Skeleton className="h-96" /></div>;
+  if (q.isError) return <div className="container-page py-10"><EmptyState title="Couldn't load this listing" body="Please refresh and try again." /></div>;
   const l = q.data;
   if (!l || (l.owner_id !== user?.id && !isAdmin))
     return (

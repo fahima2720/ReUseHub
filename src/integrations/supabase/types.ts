@@ -42,6 +42,7 @@ export type Database = {
           listing_id: string
           message: string
           recipient_id: string
+          reply_to_id: string | null
           sender_id: string
         }
         Insert: {
@@ -50,6 +51,7 @@ export type Database = {
           listing_id: string
           message: string
           recipient_id: string
+          reply_to_id?: string | null
           sender_id: string
         }
         Update: {
@@ -58,6 +60,7 @@ export type Database = {
           listing_id?: string
           message?: string
           recipient_id?: string
+          reply_to_id?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -73,6 +76,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
             referencedColumns: ["id"]
           },
           {

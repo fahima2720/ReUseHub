@@ -31,7 +31,8 @@ function Dashboard() {
     queryKey: ["my-listings", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase.from("listings").select(LISTING_SELECT).eq("owner_id", user!.id).order("created_at", { ascending: false });
+      if (!user) return [];
+      const { data, error } = await supabase.from("listings").select(LISTING_SELECT).eq("owner_id", user.id).order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ListingRow[];
     },
@@ -62,6 +63,8 @@ function Dashboard() {
 
       {q.isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+      ) : q.isError ? (
+        <EmptyState title="Couldn't load your listings" body="Please try again." action={<Button variant="outline" onClick={() => q.refetch()}>Try again</Button>} />
       ) : !q.data?.length ? (
         <EmptyState title="You haven't listed anything yet" body="Sell something you no longer use, or give it away to someone nearby." action={<Button asChild><Link to="/sell">Create your first listing</Link></Button>} />
       ) : (
