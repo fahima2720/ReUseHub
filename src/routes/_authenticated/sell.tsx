@@ -10,6 +10,8 @@ export const Route = createFileRoute("/_authenticated/sell")({
   validateSearch: z.object({ type: z.enum(["sale", "donation"]).optional().catch(undefined) }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "List an item — ReUseHub" },
       { name: "description", content: "Sell a pre-owned item or give it away for free on ReUseHub." },
       { property: "og:title", content: "List an item — ReUseHub" },

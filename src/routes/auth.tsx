@@ -15,6 +15,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Log in or sign up — ReUseHub" },
       { name: "description", content: "Create a ReUseHub account to sell, donate and message other members." },
       { property: "og:title", content: "Log in or sign up — ReUseHub" },

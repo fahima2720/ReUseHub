@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/inbox")({
   validateSearch: z.object({ tab: z.enum(["received", "sent"]).optional().catch(undefined) }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Inbox — ReUseHub" },
       { name: "description", content: "Messages about your listings and items you're interested in." },
       { property: "og:title", content: "Inbox — ReUseHub" },

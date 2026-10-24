@@ -21,7 +21,13 @@ export const Route = createFileRoute("/item/$id")({
     const l = loaderData?.listing;
     const title = l ? `${l.title} — ${formatPrice(l.listing_type, l.price)} | ReUseHub` : "Item — ReUseHub";
     const desc = l ? l.description.slice(0, 150) : "Item details on ReUseHub.";
-    return { meta: [{ title }, { name: "description", content: desc }, { property: "og:title", content: title }, { property: "og:description", content: desc }] };
+    const image = l?.image_url?.startsWith("https://") ? l.image_url : undefined;
+    return { meta: [
+      { title }, { name: "description", content: desc },
+      { property: "og:title", content: title }, { property: "og:description", content: desc },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
+      ...(image ? [{ property: "og:image", content: image }, { name: "twitter:image", content: image }] : []),
+    ] };
   },
   component: ItemPage,
   errorComponent: () => <div className="container-page py-10"><h1 className="text-xl font-bold">Couldn't load this item</h1><Button asChild variant="outline" className="mt-4"><Link to="/browse">Back to browse</Link></Button></div>,

@@ -18,6 +18,8 @@ import { LISTING_SELECT, formatDate, formatPrice, statusLabel, type ListingRow }
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Admin — ReUseHub" },
       { name: "description", content: "ReUseHub moderation dashboard." },
       { property: "og:title", content: "Admin — ReUseHub" },
