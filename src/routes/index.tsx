@@ -10,6 +10,8 @@ import hero from "@/assets/hero.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "ReUseHub — Give Things a Second Life" },
       { name: "description", content: "A local marketplace to sell pre-owned items or give usable things away for free." },
       { property: "og:title", content: "ReUseHub — Give Things a Second Life" },
@@ -96,11 +98,11 @@ function ListingSection({
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="aspect-[3/4] rounded-lg" />)}</div>
       ) : query.isError ? (
         <EmptyState title="Couldn't load items" body="Please refresh the page to try again." />
-      ) : query.data!.rows.length === 0 ? (
+      ) : !query.data?.rows.length ? (
         <EmptyState title="Nothing here yet" body="Be the first to list something." />
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {query.data!.rows.slice(0, 4).map((l) => <ListingCard key={l.id} listing={l} />)}
+          {query.data.rows.slice(0, 4).map((l) => <ListingCard key={l.id} listing={l} />)}
         </div>
       )}
     </section>

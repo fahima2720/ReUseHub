@@ -15,6 +15,8 @@ import { LISTING_SELECT, STATUSES, formatDate, formatPrice, type ListingRow, typ
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "My listings — ReUseHub" },
       { name: "description", content: "Manage the items you're selling or giving away." },
       { property: "og:title", content: "My listings — ReUseHub" },

@@ -11,6 +11,8 @@ import { fetchListing } from "@/lib/listings";
 export const Route = createFileRoute("/_authenticated/edit/$id")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Edit listing — ReUseHub" },
       { name: "description", content: "Update your ReUseHub listing." },
       { property: "og:title", content: "Edit listing — ReUseHub" },

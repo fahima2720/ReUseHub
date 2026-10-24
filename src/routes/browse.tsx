@@ -22,6 +22,8 @@ export const Route = createFileRoute("/browse")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Browse items — ReUseHub" },
       { name: "description", content: "Search second-hand items for sale and free donations by category, condition and price." },
       { property: "og:title", content: "Browse items — ReUseHub" },
