@@ -15,6 +15,13 @@
       "when": 1792761472847,
       "tag": "0001_safe_inquiry_replies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792940161767,
+      "tag": "0002_profile_editing_and_unread_inquiries",
+      "breakpoints": true
     }
   ]
 }
