@@ -12,3 +12,4 @@
 - Keep hosted data in the existing Lovable Cloud/PostgreSQL integration; `database/` contains independent MySQL teaching materials, not runtime queries, to avoid disrupting the live app.
 - Keep pure input validation in `src/lib/validation.ts` and assert business values in focused tests so forms and tests share the same rules.
 - Model replies as new inquiry rows with a nullable parent reference; database triggers derive the recipient and require a received parent and available listing, preventing spoofed recipients.
+- Profile editing uses own-row updates of editable fields only; inquiry read tracking uses a recipient-scoped RPC, never direct client updates, to preserve identity and message integrity.

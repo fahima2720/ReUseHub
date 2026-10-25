@@ -21,3 +21,9 @@ export const listingSchema = z.object({
 });
 
 export const messageSchema = z.string().trim().min(5).max(1000);
+
+export const profileSchema = z.object({
+  full_name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
+  phone: z.string().trim().regex(/^[0-9+\- ]{7,20}$/, "Enter a valid phone number (7–20 digits)"),
+  location: z.string().trim().max(80).optional(),
+});
