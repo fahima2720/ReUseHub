@@ -1,8 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Leaf, Menu, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Logo() {
   return (
@@ -20,6 +23,17 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const unread = useQuery({
+    queryKey: ["unread-inquiries", user?.id],
+    enabled: !!user,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase.from("inquiries").select("id", { count: "exact", head: true }).eq("recipient_id", user.id).is("read_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +54,11 @@ export function SiteHeader() {
           <Link to="/dashboard" className="nav-link" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>
             My listings
           </Link>
-          <Link to="/inbox" className="nav-link" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>
+          <Link to="/inbox" className="nav-link flex items-center gap-1.5" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>
             Inbox
+            {!!unread.data && <Badge aria-label={`${unread.data} unread messages`}>{unread.data}</Badge>}
           </Link>
+          <Link to="/profile" className="nav-link" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>Profile</Link>
         </>
       )}
       {isAdmin && (

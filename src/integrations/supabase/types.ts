@@ -41,6 +41,7 @@ export type Database = {
           id: string
           listing_id: string
           message: string
+          read_at: string | null
           recipient_id: string
           reply_to_id: string | null
           sender_id: string
@@ -50,6 +51,7 @@ export type Database = {
           id?: string
           listing_id: string
           message: string
+          read_at?: string | null
           recipient_id: string
           reply_to_id?: string | null
           sender_id: string
@@ -59,6 +61,7 @@ export type Database = {
           id?: string
           listing_id?: string
           message?: string
+          read_at?: string | null
           recipient_id?: string
           reply_to_id?: string | null
           sender_id?: string
@@ -282,6 +285,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_inquiry_read: { Args: { _id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

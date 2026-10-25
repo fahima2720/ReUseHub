@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { messageSchema } from "@/lib/validation";
 import { z } from "zod";
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/inbox")({
 });
 
 type Row = {
-  id: string; message: string; created_at: string;
+  id: string; message: string; created_at: string; read_at: string | null;
   listing: { id: string; title: string; status: string } | null;
   sender: { full_name: string } | null;
   recipient: { full_name: string } | null;
@@ -45,7 +46,7 @@ function Inbox() {
       if (!user) return [];
       const { data, error } = await supabase
         .from("inquiries")
-        .select("id, message, created_at, listing:listings(id, title, status), sender:profiles!inquiries_sender_id_fkey(full_name), recipient:profiles!inquiries_recipient_id_fkey(full_name)")
+        .select("id, message, created_at, read_at, listing:listings(id, title, status), sender:profiles!inquiries_sender_id_fkey(full_name), recipient:profiles!inquiries_recipient_id_fkey(full_name)")
         .eq(tab === "received" ? "recipient_id" : "sender_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -87,6 +88,7 @@ function Inbox() {
                   <time className="text-xs text-muted-foreground" dateTime={m.created_at}>{new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</time>
                 </div>
                 <p className="mt-2 whitespace-pre-line text-sm">{m.message}</p>
+                {tab === "received" && !m.read_at && <ReadControl id={m.id} />}
                 {tab === "received" && m.listing?.status === "available" && <ReplyForm message={m} />}
                 {tab === "received" && m.listing?.status !== "available" && <p className="mt-2 text-xs text-muted-foreground">This listing is no longer accepting messages.</p>}
               </li>
@@ -96,6 +98,26 @@ function Inbox() {
       </div>
     </div>
   );
+}
+
+function ReadControl({ id }: { id: string }) {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  return <div className="mt-3 flex items-center gap-2">
+    <Badge>New</Badge>
+    <Button variant="outline" size="sm" disabled={busy} onClick={async () => {
+      setBusy(true);
+      try {
+        const { error } = await supabase.rpc("mark_inquiry_read", { _id: id });
+        if (error) throw error;
+        await Promise.all([
+          qc.invalidateQueries({ queryKey: ["inbox"] }),
+          qc.invalidateQueries({ queryKey: ["unread-inquiries"] }),
+        ]);
+      } catch (error) { toast.error(error instanceof Error ? error.message : "Couldn't mark message as read."); }
+      finally { setBusy(false); }
+    }}>{busy ? "Saving…" : "Mark as read"}</Button>
+  </div>;
 }
 
 function ReplyForm({ message }: { message: Row }) {
@@ -114,8 +136,13 @@ function ReplyForm({ message }: { message: Row }) {
     try {
       const { error } = await supabase.from("inquiries").insert({ listing_id: message.listing.id, reply_to_id: message.id, sender_id: user.id, recipient_id: user.id, message: parsed.data });
       if (error) throw error;
+      const { error: readError } = await supabase.rpc("mark_inquiry_read", { _id: message.id });
       toast.success("Reply sent."); setOpen(false); setText("");
-      await qc.invalidateQueries({ queryKey: ["inbox"] });
+      if (readError) toast.error("Reply sent, but couldn't mark the message as read.");
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["inbox"] }),
+        qc.invalidateQueries({ queryKey: ["unread-inquiries"] }),
+      ]);
     } catch (error) { toast.error(error instanceof Error ? error.message : "Couldn't send reply."); }
     finally { setBusy(false); }
   }}>
