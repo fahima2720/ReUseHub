@@ -97,6 +97,38 @@ export type Database = {
           },
         ]
       }
+      listing_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          listing_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          listing_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          listing_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_images_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
           category_id: number
@@ -286,6 +318,10 @@ export type Database = {
         Returns: boolean
       }
       mark_inquiry_read: { Args: { _id: string }; Returns: undefined }
+      save_listing_images: {
+        Args: { _image_urls: string[]; _listing_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
