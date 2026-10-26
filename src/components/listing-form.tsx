@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CONDITIONS, STATUSES, fetchCategories, uploadImage, validateImage, type ListingRow } from "@/lib/listings";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { listingSchema } from "@/lib/validation";
+import { listingSchema, listingPhotosSchema } from "@/lib/validation";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 
@@ -98,7 +98,7 @@ export function ListingForm({
         uploaded.push({ url: photo.file ? await uploadImage(user.id, photo.file) : photo.url });
       }
       setPhotos(uploaded);
-      const image_urls = uploaded.map((photo) => photo.url);
+      const image_urls = listingPhotosSchema.parse(uploaded.map((photo) => photo.url));
       await onSubmit({ ...parsed.data, image_url: image_urls[0] ?? null, image_urls });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
