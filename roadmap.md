@@ -13,6 +13,6 @@
 - [x] Verify profile save/reload, validation, inbox tabs, database permissions, and preview compilation; unread/reply end-to-end check unavailable because the account has no received messages.
 
 ## Multiple listing photos
-- [ ] Add photo rows with existing-cover backfill and owner/admin permissions.
-- [ ] Support up to five uploads, removal during editing, and item thumbnails.
-- [ ] Verify create/edit and legacy-cover behavior.
+- [x] Add photo rows with existing-cover backfill and owner/admin permissions.
+- [x] Support up to five uploads, removal during editing, and item thumbnails.
+- [x] Verify five-photo create, thumbnail selection, sixth-photo rejection, cover removal and persistence; all existing covers have photo rows.
