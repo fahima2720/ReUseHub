@@ -11,3 +11,8 @@
 - [x] Add own-profile editing and header link.
 - [x] Add recipient-only read tracking, inbox controls, and header unread count.
 - [x] Verify profile save/reload, validation, inbox tabs, database permissions, and preview compilation; unread/reply end-to-end check unavailable because the account has no received messages.
+
+## Multiple listing photos
+- [ ] Add photo rows with existing-cover backfill and owner/admin permissions.
+- [ ] Support up to five uploads, removal during editing, and item thumbnails.
+- [ ] Verify create/edit and legacy-cover behavior.

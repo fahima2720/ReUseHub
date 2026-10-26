@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { z } from "zod";
 import { toast } from "sonner";
@@ -10,10 +10,12 @@ import { CONDITIONS, STATUSES, fetchCategories, uploadImage, validateImage, type
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { listingSchema } from "@/lib/validation";
+import { supabase } from "@/integrations/supabase/client";
+import { X } from "lucide-react";
 
 export { listingSchema } from "@/lib/validation";
 
-export type ListingInput = z.output<typeof listingSchema> & { image_url: string | null };
+export type ListingInput = z.output<typeof listingSchema> & { image_url: string | null; image_urls: string[] };
 
 const selectCls = "h-10 w-full rounded-md border border-input bg-card px-3 text-sm";
 
@@ -31,23 +33,54 @@ export function ListingForm({
   const { user, profile } = useAuth();
   const cats = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
   const [type, setType] = useState<"sale" | "donation">(initial?.listing_type ?? defaultType);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(initial?.image_url ?? null);
+  const [photos, setPhotos] = useState<{ url: string; file?: File }[]>(initial?.image_url ? [{ url: initial.image_url }] : []);
+  const objectUrls = useRef(new Set<string>());
+  const [photosReady, setPhotosReady] = useState(!initial);
+  const [picking, setPicking] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  useEffect(() => () => { if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview); }, [preview]);
+  useEffect(() => {
+    const urls = objectUrls.current;
+    return () => { urls.forEach((url) => URL.revokeObjectURL(url)); };
+  }, []);
+  const images = useQuery({
+    queryKey: ["listing-images", initial?.id],
+    enabled: !!initial,
+    queryFn: async () => {
+      if (!initial) return [];
+      const { data, error } = await supabase.from("listing_images").select("image_url").eq("listing_id", initial.id).order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+  useEffect(() => {
+    if (photosReady || !images.data) return;
+    if (images.data.length) setPhotos(images.data.map((image) => ({ url: image.image_url })));
+    setPhotosReady(true);
+  }, [images.data, photosReady]);
 
-  const pick = async (f: File | undefined) => {
-    if (!f) return;
-    const err = await validateImage(f);
-    if (err) { setErrors((e) => ({ ...e, image: err })); return; }
-    setErrors(({ image: _i, ...rest }) => rest);
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+  const pick = async (files: File[]) => {
+    if (!files.length) return;
+    if (photos.length + files.length > 5) { setErrors((e) => ({ ...e, image: "Choose up to 5 photos." })); return; }
+    setPicking(true);
+    try {
+      for (const file of files) {
+        const error = await validateImage(file);
+        if (error) { setErrors((e) => ({ ...e, image: error })); return; }
+      }
+      const added = files.map((file) => {
+        const url = URL.createObjectURL(file);
+        objectUrls.current.add(url);
+        return { url, file };
+      });
+      setErrors(({ image: _i, ...rest }) => rest);
+      setPhotos((current) => [...current, ...added]);
+    } finally { setPicking(false); }
   };
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!photosReady || picking || busy) return;
     const fd = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     const parsed = listingSchema.safeParse({ ...fd, listing_type: type });
     if (!parsed.success) {
@@ -59,9 +92,14 @@ export function ListingForm({
     if (!user) return toast.error("Please log in before publishing.");
     setBusy(true);
     try {
-      let image_url = initial?.image_url ?? null;
-      if (file) image_url = await uploadImage(user.id, file);
-      await onSubmit({ ...parsed.data, image_url });
+      if (photos.length > 5) throw new Error("Choose up to 5 photos.");
+      const uploaded = [];
+      for (const photo of photos) {
+        uploaded.push({ url: photo.file ? await uploadImage(user.id, photo.file) : photo.url });
+      }
+      setPhotos(uploaded);
+      const image_urls = uploaded.map((photo) => photo.url);
+      await onSubmit({ ...parsed.data, image_url: image_urls[0] ?? null, image_urls });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -137,16 +175,20 @@ export function ListingForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="image">Photo</Label>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          {preview && <img src={preview} alt="Selected item preview" className="size-28 rounded-md border object-cover" />}
-          <Input id="image" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => pick(e.target.files?.[0])} />
+        <Label htmlFor="image">Photos</Label>
+        <div className="flex flex-wrap gap-4">
+          {photos.map((photo, index) => <div key={photo.url} className="relative">
+            <img src={photo.url} alt={index === 0 ? "Cover photo" : `Item photo ${index + 1}`} className="size-28 rounded-md border object-cover" />
+            <Button type="button" variant="outline" size="icon" className="absolute right-1 top-1 size-7" title={`Remove photo ${index + 1}`} aria-label={`Remove photo ${index + 1}`} disabled={busy || picking || !photosReady} onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}><X className="size-4" /></Button>
+          </div>)}
         </div>
-        <p className="text-xs text-muted-foreground">JPG, PNG or WebP, up to 5 MB.</p>
+        <Input id="image" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy || picking || !photosReady || photos.length >= 5} onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void pick(files); }} />
+        <p className="text-xs text-muted-foreground">Up to 5 photos. JPG, PNG or WebP, up to 5 MB each. First photo is the cover.</p>
+        {images.isError && <p className="text-xs text-destructive">Couldn't load photos. <Button type="button" variant="link" size="sm" onClick={() => images.refetch()}>Try again</Button></p>}
         {err("image")}
       </div>
 
-      <Button type="submit" size="lg" disabled={busy} className="w-full sm:w-auto">{busy ? "Saving…" : submitLabel}</Button>
+      <Button type="submit" size="lg" disabled={busy || picking || !photosReady} className="w-full sm:w-auto">{busy ? "Saving…" : submitLabel}</Button>
     </form>
   );
 }
