@@ -13,3 +13,4 @@
 - Keep pure input validation in `src/lib/validation.ts` and assert business values in focused tests so forms and tests share the same rules.
 - Model replies as new inquiry rows with a nullable parent reference; database triggers derive the recipient and require a received parent and available listing, preventing spoofed recipients.
 - Profile editing uses own-row updates of editable fields only; inquiry read tracking uses a recipient-scoped RPC, never direct client updates, to preserve identity and message integrity.
+- Listing photo rows and the legacy cover are synchronized through an owner/admin-scoped atomic RPC; retain the cover field for existing single-image consumers.

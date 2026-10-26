@@ -50,7 +50,7 @@ function ItemPage() {
         <Link to="/browse" search={{ category: l.categories?.slug }} className="hover:text-foreground">{l.categories?.name}</Link>
       </nav>
       <div className="grid gap-8 md:grid-cols-[1.2fr_1fr]">
-        <ListingImage src={l.image_url} alt={l.title} className="aspect-square w-full rounded-xl border md:aspect-[4/3]" />
+        <PhotoGallery key={l.id} listingId={l.id} cover={l.image_url} title={l.title} />
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <TypeBadge type={l.listing_type} />
@@ -111,6 +111,27 @@ function ItemPage() {
       )}
     </div>
   );
+}
+
+function PhotoGallery({ listingId, cover, title }: { listingId: string; cover: string | null; title: string }) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const images = useQuery({
+    queryKey: ["listing-images", listingId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("listing_images").select("image_url").eq("listing_id", listingId).order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+  const urls = Array.from(new Set([...(cover ? [cover] : []), ...(images.data ?? []).map((image) => image.image_url)]));
+  return <div className="min-w-0">
+    <ListingImage src={selected ?? cover ?? urls[0] ?? null} alt={title} className="aspect-square w-full rounded-xl border md:aspect-[4/3]" />
+    {urls.length > 1 && <div className="mt-3 flex flex-wrap gap-2">
+      {urls.map((url, index) => <Button key={url} type="button" variant="outline" className="size-16 overflow-hidden p-0" aria-label={`View photo ${index + 1}`} aria-pressed={(selected ?? cover ?? urls[0]) === url} onClick={() => setSelected(url)}>
+        <ListingImage src={url} alt={`${title}, photo ${index + 1}`} className="size-full object-cover" />
+      </Button>)}
+    </div>}
+  </div>;
 }
 
 function Meta({ icon: Icon, label, value }: { icon: typeof Tag; label: string; value: string }) {

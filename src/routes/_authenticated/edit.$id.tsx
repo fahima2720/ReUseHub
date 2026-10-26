@@ -45,10 +45,12 @@ function Edit() {
       <ListingForm
         initial={l}
         submitLabel="Save changes"
-        onSubmit={async (v) => {
+        onSubmit={async ({ image_urls, image_url: _cover, ...v }) => {
           // RLS re-checks ownership on the server; the trigger blocks owner changes
           const { error } = await supabase.from("listings").update(v).eq("id", id);
           if (error) throw error;
+          const { error: photoError } = await supabase.rpc("save_listing_images", { _listing_id: id, _image_urls: image_urls });
+          if (photoError) throw photoError;
           qc.invalidateQueries();
           toast.success("Listing updated.");
           navigate({ to: "/dashboard" });

@@ -22,6 +22,8 @@ export const listingSchema = z.object({
 
 export const messageSchema = z.string().trim().min(5).max(1000);
 
+export const listingPhotosSchema = z.array(z.string().min(1).max(8192)).max(5, "Choose up to 5 photos.");
+
 export const profileSchema = z.object({
   full_name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
   phone: z.string().trim().regex(/^[0-9+\- ]{7,20}$/, "Enter a valid phone number (7–20 digits)"),

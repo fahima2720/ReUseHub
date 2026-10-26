@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { listingSchema, messageSchema, profileSchema } from "@/lib/validation";
+import { listingSchema, messageSchema, profileSchema, listingPhotosSchema } from "@/lib/validation";
 
 const listing = { title: "Study table", description: "A sturdy wooden study table.", category_id: 1, listing_type: "sale", price: "500", item_condition: "good", location: "Dhaka" };
 describe("ReUseHub business rules", () => {
+  it("accepts up to 5 listing photos and rejects a sixth", () => {
+    expect(listingPhotosSchema.safeParse(Array(5).fill("https://example.test/photo.jpg")).success).toBe(true);
+    expect(listingPhotosSchema.safeParse(Array(6).fill("https://example.test/photo.jpg")).success).toBe(false);
+  });
   it("limits profile names to 2–80 characters", () => {
     const profile = { full_name: "Eva", phone: "0123456789" };
     for (const length of [1, 81]) expect(profileSchema.safeParse({ ...profile, full_name: "a".repeat(length) }).success).toBe(false);

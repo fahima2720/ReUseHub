@@ -33,10 +33,15 @@ function Sell() {
       <ListingForm
         defaultType={type ?? "sale"}
         submitLabel="Publish listing"
-        onSubmit={async ({ status: _s, ...v }) => {
+        onSubmit={async ({ status: _s, image_urls, ...v }) => {
           if (!user) throw new Error("Please log in to publish.");
           const { data, error } = await supabase.from("listings").insert({ ...v, owner_id: user.id }).select("id").single();
           if (error) throw error;
+          const { error: photoError } = await supabase.rpc("save_listing_images", { _listing_id: data.id, _image_urls: image_urls });
+          if (photoError) {
+            await supabase.from("listings").delete().eq("id", data.id);
+            throw photoError;
+          }
           qc.invalidateQueries({ queryKey: ["listings"] });
           toast.success("Your listing is live.");
           navigate({ to: "/item/$id", params: { id: data.id } });
