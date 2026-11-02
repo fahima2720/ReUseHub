@@ -9,6 +9,8 @@ import { ListingCard, ListingImage, TypeBadge } from "@/components/listing-card"
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { conditionLabel, fetchListing, fetchListings, formatDate, formatPrice, statusLabel } from "@/lib/listings";
+import { messageSchema } from "@/lib/validation";
+import { ListingAttachments } from "@/components/listing-attachments";
 
 export const Route = createFileRoute("/item/$id")({
   loader: async ({ params }) => {
@@ -40,7 +42,7 @@ function ItemPage() {
   const isOwner = user?.id === l.owner_id;
   const related = useQuery({
     queryKey: ["listings", "related", l.category_id, l.id],
-    queryFn: () => fetchListings({ category: l.categories?.slug }),
+    queryFn: ({ signal }) => fetchListings({ category: l.categories?.slug }, signal, 5),
   });
 
   return (
@@ -98,6 +100,7 @@ function ItemPage() {
       <section className="mt-10 max-w-3xl">
         <h2 className="mb-2 text-lg font-semibold">Description</h2>
         <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">{l.description}</p>
+        {user && <ListingAttachments listingId={l.id} editable={isOwner} />}
         {user && !isOwner && <ReportForm listingId={l.id} />}
       </section>
 
@@ -154,7 +157,8 @@ function InquiryForm({ listingId, isFree }: { listingId: string; isFree: boolean
     e.preventDefault();
     const m = msg.trim();
     if (!user) return toast.error("Please log in to send a message.");
-    if (m.length < 5 || m.length > 1000) return toast.error("Message must be 5–1000 characters.");
+    const parsed = messageSchema.safeParse(msg);
+    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid message.");
     setBusy(true);
     // recipient_id is overwritten by a database trigger using the listing's real owner
     const { error } = await supabase.from("inquiries").insert({ listing_id: listingId, sender_id: user.id, recipient_id: user.id, message: m });
@@ -175,7 +179,8 @@ function InquiryForm({ listingId, isFree }: { listingId: string; isFree: boolean
   return (
     <form onSubmit={send} className="space-y-2">
       <label htmlFor="msg" className="text-sm font-medium">Message the {isFree ? "donor" : "seller"}</label>
-      <Textarea id="msg" value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} maxLength={1000} required />
+      <Textarea id="msg" value={msg} onChange={(e) => setMsg(e.target.value)} rows={3} required />
+      <p className={msg.trim().length > 5000 ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>{msg.trim().length.toLocaleString()} / 5,000</p>
       <Button type="submit" disabled={busy} className="w-full sm:w-auto">{busy ? "Sending…" : "Send message"}</Button>
     </form>
   );

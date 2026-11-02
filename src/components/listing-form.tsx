@@ -11,7 +11,8 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { listingSchema, listingPhotosSchema } from "@/lib/validation";
 import { supabase } from "@/integrations/supabase/client";
-import { X } from "lucide-react";
+import { X, ArrowLeft, ArrowRight } from "lucide-react";
+import { ListingAttachments } from "@/components/listing-attachments";
 
 export { listingSchema } from "@/lib/validation";
 
@@ -39,6 +40,7 @@ export function ListingForm({
   const [picking, setPicking] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   useEffect(() => {
     const urls = objectUrls.current;
     return () => { urls.forEach((url) => URL.revokeObjectURL(url)); };
@@ -61,7 +63,10 @@ export function ListingForm({
 
   const pick = async (files: File[]) => {
     if (!files.length) return;
-    if (photos.length + files.length > 5) { setErrors((e) => ({ ...e, image: "Choose up to 5 photos." })); return; }
+    const unique = files.filter((file, index) => !photos.some((p) => p.file?.name === file.name && p.file?.size === file.size && p.file?.lastModified === file.lastModified) && files.findIndex((f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified) === index);
+    if (unique.length !== files.length) { setErrors((e) => ({ ...e, image: "Duplicate photos were skipped." })); }
+    files = unique;
+    if (photos.length + files.length > 10) { setErrors((e) => ({ ...e, image: "Choose up to 10 photos." })); return; }
     setPicking(true);
     try {
       for (const file of files) {
@@ -92,10 +97,16 @@ export function ListingForm({
     if (!user) return toast.error("Please log in before publishing.");
     setBusy(true);
     try {
-      if (photos.length > 5) throw new Error("Choose up to 5 photos.");
-      const uploaded = [];
-      for (const photo of photos) {
-        uploaded.push({ url: photo.file ? await uploadImage(user.id, photo.file) : photo.url });
+      if (photos.length > 10) throw new Error("Choose up to 10 photos.");
+      const uploaded = [...photos];
+      for (let index = 0; index < uploaded.length; index++) {
+        const photo = uploaded[index];
+        if (!photo.file) continue;
+        setUploadProgress(`Uploading photo ${index + 1} of ${uploaded.length}…`);
+        const url = await uploadImage(user.id, photo.file);
+        uploaded[index] = { url };
+        // Retain successful uploads on retry; a later failure never uploads them twice.
+        setPhotos([...uploaded]);
       }
       setPhotos(uploaded);
       const image_urls = listingPhotosSchema.parse(uploaded.map((photo) => photo.url));
@@ -104,6 +115,7 @@ export function ListingForm({
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setBusy(false);
+      setUploadProgress("");
     }
   };
 
@@ -180,13 +192,20 @@ export function ListingForm({
           {photos.map((photo, index) => <div key={photo.url} className="relative">
             <img src={photo.url} alt={index === 0 ? "Cover photo" : `Item photo ${index + 1}`} className="size-28 rounded-md border object-cover" />
             <Button type="button" variant="outline" size="icon" className="absolute right-1 top-1 size-7" title={`Remove photo ${index + 1}`} aria-label={`Remove photo ${index + 1}`} disabled={busy || picking || !photosReady} onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}><X className="size-4" /></Button>
+            <div className="mt-1 flex justify-between">
+              <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={`Move photo ${index + 1} left`} title="Move photo left" disabled={busy || index === 0} onClick={() => setPhotos((current) => { const next = [...current]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next; })}><ArrowLeft className="size-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" className="size-7" aria-label={`Move photo ${index + 1} right`} title="Move photo right" disabled={busy || index === photos.length - 1} onClick={() => setPhotos((current) => { const next = [...current]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; return next; })}><ArrowRight className="size-4" /></Button>
+            </div>
           </div>)}
         </div>
-        <Input id="image" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy || picking || !photosReady || photos.length >= 5} onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void pick(files); }} />
-        <p className="text-xs text-muted-foreground">Up to 5 photos. JPG, PNG or WebP, up to 5 MB each. First photo is the cover.</p>
+        <Input id="image" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy || picking || !photosReady || photos.length >= 10} onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void pick(files); }} />
+        <p className="text-xs text-muted-foreground">Up to 10 photos. JPG, PNG or WebP, up to 5 MB each. First photo is the cover.</p>
+        {uploadProgress && <p role="status" className="text-sm text-muted-foreground">{uploadProgress}</p>}
         {images.isError && <p className="text-xs text-destructive">Couldn't load photos. <Button type="button" variant="link" size="sm" onClick={() => images.refetch()}>Try again</Button></p>}
         {err("image")}
       </div>
+
+      {initial && <ListingAttachments listingId={initial.id} editable />}
 
       <Button type="submit" size="lg" disabled={busy || picking || !photosReady} className="w-full sm:w-auto">{busy ? "Saving…" : submitLabel}</Button>
     </form>
