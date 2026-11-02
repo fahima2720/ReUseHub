@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/listing-card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { ConversationInbox } from "@/components/conversation-inbox";
 
 export const Route = createFileRoute("/_authenticated/inbox")({
   validateSearch: z.object({ tab: z.enum(["received", "sent"]).optional().catch(undefined) }),
@@ -39,16 +40,17 @@ function Inbox() {
   const { tab = "received" } = Route.useSearch();
   const navigate = useNavigate({ from: "/inbox" });
   const { user } = useAuth();
+  const [sentPage, setSentPage] = useState(0);
   const q = useQuery({
-    queryKey: ["inbox", tab, user?.id],
-    enabled: !!user,
+    queryKey: ["inbox", tab, user?.id, sentPage],
+    enabled: !!user && tab === "sent",
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from("inquiries")
         .select("id, message, created_at, read_at, listing:listings(id, title, status), sender:profiles!inquiries_sender_id_fkey(full_name), recipient:profiles!inquiries_recipient_id_fkey(full_name)")
         .eq(tab === "received" ? "recipient_id" : "sender_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }).range(sentPage * 20, sentPage * 20 + 20);
       if (error) throw error;
       return data as unknown as Row[];
     },
@@ -66,7 +68,7 @@ function Inbox() {
         ))}
       </div>
       <div className="mt-6">
-        {q.isLoading ? (
+        {tab === "received" ? <ConversationInbox /> : q.isLoading ? (
           <Skeleton className="h-32" />
         ) : q.isError ? (
           <EmptyState title="Couldn't load messages" body="Please try again." action={<Button variant="outline" onClick={() => q.refetch()}>Try again</Button>} />
@@ -77,7 +79,7 @@ function Inbox() {
           />
         ) : (
           <ul className="space-y-3">
-            {q.data.map((m) => (
+            {q.data.slice(0, 20).map((m) => (
               <li key={m.id} className="rounded-lg border bg-card p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
                   <p>
@@ -95,6 +97,7 @@ function Inbox() {
             ))}
           </ul>
         )}
+        {tab === "sent" && <div className="mt-4 flex gap-2">{sentPage > 0 && <Button variant="outline" onClick={() => setSentPage(sentPage - 1)}>Previous</Button>}{(q.data?.length ?? 0) > 20 && <Button variant="outline" onClick={() => setSentPage(sentPage + 1)}>Next</Button>}</div>}
       </div>
     </div>
   );
@@ -131,7 +134,7 @@ function ReplyForm({ message }: { message: Row }) {
     event.preventDefault();
     if (!user || !message.listing) return;
     const parsed = messageSchema.safeParse(text);
-    if (!parsed.success) return toast.error("Message must be 5–1000 characters.");
+    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid message.");
     setBusy(true);
     try {
       const { error } = await supabase.from("inquiries").insert({ listing_id: message.listing.id, reply_to_id: message.id, sender_id: user.id, recipient_id: user.id, message: parsed.data });
@@ -147,7 +150,8 @@ function ReplyForm({ message }: { message: Row }) {
     finally { setBusy(false); }
   }}>
     <label htmlFor={`reply-${message.id}`} className="text-sm font-medium">Reply to {message.sender?.full_name}</label>
-    <Textarea id={`reply-${message.id}`} value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} rows={3} required />
+    <Textarea id={`reply-${message.id}`} value={text} onChange={(e) => setText(e.target.value)} rows={3} required />
+    <p className="text-xs text-muted-foreground">{text.trim().length.toLocaleString()} / 5,000</p>
     <div className="flex gap-2"><Button size="sm" disabled={busy} type="submit">{busy ? "Sending…" : "Send reply"}</Button><Button variant="ghost" size="sm" type="button" onClick={() => setOpen(false)}>Cancel</Button></div>
   </form>;
 }
