@@ -22,8 +22,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const recent = useQuery({ queryKey: ["listings", "recent"], queryFn: () => fetchListings({ sort: "newest" }) });
-  const free = useQuery({ queryKey: ["listings", "free-home"], queryFn: () => fetchListings({ type: "donation" }) });
+  const recent = useQuery({ queryKey: ["listings", "recent"], queryFn: ({ signal }) => fetchListings({ sort: "newest" }, signal, 4) });
+  const free = useQuery({ queryKey: ["listings", "free-home"], queryFn: ({ signal }) => fetchListings({ type: "donation" }, signal, 4) });
   const cats = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
 
   return (

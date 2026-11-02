@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -47,8 +47,16 @@ function Browse() {
   const set = (patch: Partial<z.infer<typeof searchSchema>>) =>
     navigate({ search: (prev) => ({ ...prev, ...patch, page: undefined }) });
 
+  useEffect(() => {
+    if (q.trim() === (s.q ?? "")) return;
+    const timer = setTimeout(() => {
+      void navigate({ search: (prev) => ({ ...prev, q: q.trim() || undefined, page: undefined }), replace: true });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [q, s.q, navigate]);
+
   const cats = useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
-  const list = useQuery({ queryKey: ["listings", "browse", s], queryFn: () => fetchListings(s), placeholderData: keepPreviousData });
+  const list = useQuery({ queryKey: ["listings", "browse", s], queryFn: ({ signal }) => fetchListings(s, signal) });
   const totalPages = list.data ? Math.max(1, Math.ceil(list.data.total / PAGE_SIZE)) : 1;
   const isFree = s.type === "donation";
 
@@ -138,7 +146,7 @@ function Browse() {
           {list.isLoading ? (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-[3/4] rounded-lg" />)}</div>
           ) : list.isError ? (
-            <EmptyState title="Couldn't load items" body="Something went wrong. Please try again." />
+            <EmptyState title="Couldn't load items" body="Something went wrong. Please try again." action={<Button variant="outline" onClick={() => list.refetch()}>Try again</Button>} />
           ) : !list.data?.rows.length ? (
             <EmptyState
               title="No items match your filters"

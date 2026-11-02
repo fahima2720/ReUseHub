@@ -25,7 +25,7 @@ export function ListingImage({ src, alt, className }: { src: string | null; alt:
         <span className="sr-only">No photo</span>
       </div>
     );
-  return <img src={src} alt={alt} loading="lazy" className={cn("object-cover", className)} />;
+  return <img src={src} alt={alt} width={800} height={600} loading="lazy" decoding="async" className={cn("object-cover", className)} />;
 }
 
 export function ListingCard({ listing }: { listing: ListingRow }) {
