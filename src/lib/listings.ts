@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { uploadListingFile } from "@/lib/uploads.functions";
+import { validateUpload } from "@/lib/uploads";
+export { MAX_IMAGE_BYTES } from "@/lib/uploads";
 
 export type ListingType = Database["public"]["Enums"]["listing_type"];
 export type ItemCondition = Database["public"]["Enums"]["item_condition"];
@@ -60,19 +63,15 @@ export type BrowseFilters = {
 export const PAGE_SIZE = 12;
 
 /** Escape characters that have meaning inside PostgREST ilike / or() filters. */
-const safeTerm = (s: string) => s.replace(/[%_,()*\\]/g, " ").trim().slice(0, 80);
+const safeTerm = (s: string) => s.trim().slice(0, 80);
 
-export async function fetchListings(f: BrowseFilters) {
+export async function fetchListings(f: BrowseFilters, signal?: AbortSignal, limit = PAGE_SIZE) {
   const page = Math.max(1, f.page ?? 1);
   let q = supabase
-    .from("listings")
+    .rpc("search_listings", { _term: safeTerm(f.q ?? "") })
     .select(LISTING_SELECT.replace("categories(name, slug)", "categories!inner(name, slug)"), { count: "exact" })
     .eq("status", "available");
 
-  if (f.q) {
-    const t = safeTerm(f.q);
-    if (t) q = q.or(`title.ilike.%${t}%,description.ilike.%${t}%`);
-  }
   if (f.category) q = q.eq("categories.slug", f.category);
   if (f.type) q = q.eq("listing_type", f.type);
   if (f.condition) q = q.eq("item_condition", f.condition);
@@ -84,9 +83,11 @@ export async function fetchListings(f: BrowseFilters) {
   if (f.sort === "price_asc") q = q.order("price", { ascending: true, nullsFirst: true });
   else if (f.sort === "price_desc") q = q.order("price", { ascending: false, nullsFirst: false });
   else q = q.order("created_at", { ascending: false });
+  q = q.order("id", { ascending: false });
 
-  const from = (page - 1) * PAGE_SIZE;
-  const { data, error, count } = await q.range(from, from + PAGE_SIZE - 1);
+  const from = (page - 1) * limit;
+  if (signal) q = q.abortSignal(signal);
+  const { data, error, count } = await q.range(from, from + limit - 1);
   if (error) throw error;
   return { rows: (data ?? []) as unknown as ListingRow[], total: count ?? 0, page };
 }
@@ -103,41 +104,11 @@ export async function fetchListing(id: string) {
   return data as unknown as ListingRow | null;
 }
 
-// ---------- Image upload ----------
-const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
-/** Check magic bytes so a renamed .exe can't pass as .jpg */
-async function sniffImage(file: File): Promise<string | null> {
-  const b = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpg";
-  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "png";
-  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45) return "webp";
-  return null;
-}
-
-export async function validateImage(file: File): Promise<string | null> {
-  if (!ALLOWED.includes(file.type)) return "Only JPG, PNG or WebP images are allowed.";
-  if (file.size > MAX_IMAGE_BYTES) return "Image must be 5 MB or smaller.";
-  if (!(await sniffImage(file))) return "This file is not a valid image.";
-  return null;
-}
-
-export async function uploadImage(userId: string, file: File) {
-  const validationError = await validateImage(file);
-  if (validationError) throw new Error(validationError);
-  const ext = await sniffImage(file);
-  if (!ext) throw new Error("This file is not a valid image.");
-  // Server-safe random filename inside the user's own folder (storage policy enforces the folder)
-  const path = `${userId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("listing-images").upload(path, file, {
-    contentType: file.type,
-    upsert: false,
-  });
-  if (error) throw error;
-  const { data, error: e2 } = await supabase.storage
-    .from("listing-images")
-    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-  if (e2) throw e2;
-  return data.signedUrl;
+export const validateImage = (file: File) => validateUpload(file, "image");
+export async function uploadImage(_userId: string, file: File) {
+  const data = new FormData();
+  data.set("file", file); data.set("kind", "image");
+  const result = await uploadListingFile({ data });
+  if (!result.url) throw new Error("Image upload failed.");
+  return result.url;
 }

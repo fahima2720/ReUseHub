@@ -20,9 +20,9 @@ export const listingSchema = z.object({
   return { ...v, price: rounded };
 });
 
-export const messageSchema = z.string().trim().min(5).max(1000);
+export const messageSchema = z.string().trim().min(1, "Enter a message.").max(5000, "Message must be 5,000 characters or fewer.");
 
-export const listingPhotosSchema = z.array(z.string().min(1).max(8192)).max(5, "Choose up to 5 photos.");
+export const listingPhotosSchema = z.array(z.string().min(1).max(8192)).max(10, "Choose up to 10 photos.");
 
 export const profileSchema = z.object({
   full_name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),

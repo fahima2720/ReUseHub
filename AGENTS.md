@@ -14,3 +14,5 @@
 - Model replies as new inquiry rows with a nullable parent reference; database triggers derive the recipient and require a received parent and available listing, preventing spoofed recipients.
 - Profile editing uses own-row updates of editable fields only; inquiry read tracking uses a recipient-scoped RPC, never direct client updates, to preserve identity and message integrity.
 - Listing photo rows and the legacy cover are synchronized through an owner/admin-scoped atomic RPC; retain the cover field for existing single-image consumers.
+- Group inquiry threads by listing and canonical participant pair without replacing message history; use participant-scoped reads and pagination.
+- Validate uploaded bytes in authenticated server functions; store optional listing PDFs privately and generate short-lived links on demand.

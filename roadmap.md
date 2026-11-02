@@ -1,5 +1,12 @@
 # ReUseHub finalization
 
+## Presentation repairs
+- [ ] Repair keyword search, debounce, cancellation and pagination.
+- [ ] Align message validation and organize participant-only conversations.
+- [ ] Support ten ordered photos and safe retryable uploads.
+- [ ] Add secure optional PDF listing attachments.
+- [ ] Measure performance and verify actual flows; record remaining limitations.
+
 - [x] Audit and repair demonstrated website defects without redesign.
 - [x] Verify public browsing/detail and own authenticated listing flows and ordinary-user permissions; record untested message/admin flows.
 - [x] Prepare separate MySQL 8.0.16+ schema, seed, and 15+ queries.

@@ -3,9 +3,9 @@ import { listingSchema, messageSchema, profileSchema, listingPhotosSchema } from
 
 const listing = { title: "Study table", description: "A sturdy wooden study table.", category_id: 1, listing_type: "sale", price: "500", item_condition: "good", location: "Dhaka" };
 describe("ReUseHub business rules", () => {
-  it("accepts up to 5 listing photos and rejects a sixth", () => {
-    expect(listingPhotosSchema.safeParse(Array(5).fill("https://example.test/photo.jpg")).success).toBe(true);
-    expect(listingPhotosSchema.safeParse(Array(6).fill("https://example.test/photo.jpg")).success).toBe(false);
+  it("accepts up to 10 listing photos and rejects an eleventh", () => {
+    expect(listingPhotosSchema.safeParse(Array(10).fill("https://example.test/photo.jpg")).success).toBe(true);
+    expect(listingPhotosSchema.safeParse(Array(11).fill("https://example.test/photo.jpg")).success).toBe(false);
   });
   it("limits profile names to 2–80 characters", () => {
     const profile = { full_name: "Eva", phone: "0123456789" };
@@ -29,9 +29,11 @@ describe("ReUseHub business rules", () => {
   it("stores NULL price for a free donation", () => {
     expect(listingSchema.parse({ ...listing, listing_type: "donation", price: "500" }).price).toBeNull();
   });
-  it("limits messages to 5–1000 trimmed characters", () => {
-    expect(messageSchema.safeParse("    hi    ").success).toBe(false);
-    expect(messageSchema.safeParse("a".repeat(1001)).success).toBe(false);
+  it("limits messages to 1–5000 trimmed characters", () => {
+    expect(messageSchema.safeParse("     ").success).toBe(false);
+    expect(messageSchema.parse(" a ")).toBe("a");
+    expect(messageSchema.safeParse("a".repeat(5000)).success).toBe(true);
+    expect(messageSchema.safeParse("a".repeat(5001)).success).toBe(false);
     expect(messageSchema.parse("  Hello  ")).toBe("Hello");
   });
 });
