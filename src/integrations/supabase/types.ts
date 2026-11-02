@@ -97,6 +97,41 @@ export type Database = {
           },
         ]
       }
+      listing_attachments: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          listing_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          listing_id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          listing_id?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_attachments_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_images: {
         Row: {
           created_at: string
@@ -317,11 +352,38 @@ export type Database = {
         }
         Returns: boolean
       }
+      inbox_conversations: { Args: { _offset?: number }; Returns: Json }
       mark_inquiry_read: { Args: { _id: string }; Returns: undefined }
       save_listing_images: {
         Args: { _image_urls: string[]; _listing_id: string }
         Returns: undefined
       }
+      search_listings: {
+        Args: { _term?: string }
+        Returns: {
+          category_id: number
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          item_condition: Database["public"]["Enums"]["item_condition"]
+          listing_type: Database["public"]["Enums"]["listing_type"]
+          location: string
+          owner_id: string | null
+          price: number | null
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "listings"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "user"
