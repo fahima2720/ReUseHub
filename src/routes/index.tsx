@@ -7,6 +7,7 @@ import { ListingCard, EmptyState } from "@/components/listing-card";
 import { fetchCategories, fetchListings } from "@/lib/listings";
 import hero from "@/assets/hero.jpg";
 
+// Home route
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
