@@ -68,8 +68,8 @@ const safeTerm = (s: string) => s.trim().slice(0, 80);
 export async function fetchListings(f: BrowseFilters, signal?: AbortSignal, limit = PAGE_SIZE) {
   const page = Math.max(1, f.page ?? 1);
   let q = supabase
-    .rpc("search_listings", { _term: safeTerm(f.q ?? "") })
-    .select(LISTING_SELECT.replace("categories(name, slug)", "categories!inner(name, slug)"), { count: "exact" })
+    .rpc("search_listings", { _term: safeTerm(f.q ?? "") }, { count: "exact" })
+    .select(LISTING_SELECT.replace("categories(name, slug)", "categories!inner(name, slug)"))
     .eq("status", "available");
 
   if (f.category) q = q.eq("categories.slug", f.category);

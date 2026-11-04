@@ -74,8 +74,8 @@ function Inbox() {
           <EmptyState title="Couldn't load messages" body="Please try again." action={<Button variant="outline" onClick={() => q.refetch()}>Try again</Button>} />
         ) : !q.data?.length ? (
           <EmptyState
-            title={tab === "received" ? "No messages yet" : "You haven't messaged anyone"}
-            body={tab === "received" ? "When someone asks about your items, it shows up here." : "Find something you like and send the owner a message."}
+            title="You haven't messaged anyone"
+            body="Find something you like and send the owner a message."
           />
         ) : (
           <ul className="space-y-3">
@@ -83,16 +83,13 @@ function Inbox() {
               <li key={m.id} className="rounded-lg border bg-card p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
                   <p>
-                    <span className="font-semibold">{tab === "received" ? m.sender?.full_name : `To ${m.recipient?.full_name}`}</span>
+                    <span className="font-semibold">{`To ${m.recipient?.full_name}`}</span>
                     {" · "}
                     {m.listing ? <Link to="/item/$id" params={{ id: m.listing.id }} className="text-primary hover:underline">{m.listing.title}</Link> : "Deleted listing"}
                   </p>
                   <time className="text-xs text-muted-foreground" dateTime={m.created_at}>{new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</time>
                 </div>
                 <p className="mt-2 whitespace-pre-line text-sm">{m.message}</p>
-                {tab === "received" && !m.read_at && <ReadControl id={m.id} />}
-                {tab === "received" && m.listing?.status === "available" && <ReplyForm message={m} />}
-                {tab === "received" && m.listing?.status !== "available" && <p className="mt-2 text-xs text-muted-foreground">This listing is no longer accepting messages.</p>}
               </li>
             ))}
           </ul>
