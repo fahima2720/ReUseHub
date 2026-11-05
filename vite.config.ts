@@ -5,9 +5,10 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { loadEnv } from "vite";
+import { loadEnv, type ConfigEnv } from "vite";
 
-export default defineConfig(({ mode }) => {
+export default (configEnv: ConfigEnv) => {
+  const { mode } = configEnv;
   const env = loadEnv(mode, process.cwd(), "");
   // Browser bundles cannot read Worker runtime bindings. Only these two public
   // values may fall back to the managed server bindings at build time.
@@ -19,7 +20,7 @@ export default defineConfig(({ mode }) => {
   if (key.startsWith("sb_secret_")) {
     throw new Error("ReUseHub browser configuration requires a publishable key, not a secret key.");
   }
-  return {
+  return defineConfig({
     vite: {
       define: {
         "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(url),
@@ -31,5 +32,5 @@ export default defineConfig(({ mode }) => {
       // nitro/vite builds from this
       server: { entry: "server" },
     },
-  };
-});
+  })(configEnv);
+};
