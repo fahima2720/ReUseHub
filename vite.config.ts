@@ -14,8 +14,13 @@ export default (configEnv: ConfigEnv) => {
   // values may fall back to the managed server bindings at build time.
   // Some build environments inject them later, so never fail the build here;
   // the generated client reports a clear error at runtime if they are missing.
-  const url = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
-  const rawKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_PUBLISHABLE_KEY;
+  // Public (non-secret) fallbacks for hosted builds that run without injected env.
+  const url =
+    env.VITE_SUPABASE_URL || env.SUPABASE_URL || "https://wrcqmweovyzbqnxkebgf.supabase.co";
+  const rawKey =
+    env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    env.SUPABASE_PUBLISHABLE_KEY ||
+    "sb_publishable_x7bDHLk4AVFi9Bl4Vkv_Pw_OMFfbVHX";
   const key = rawKey && !rawKey.startsWith("sb_secret_") ? rawKey : undefined;
   const define: Record<string, string> = {};
   if (url) define["import.meta.env.VITE_SUPABASE_URL"] = JSON.stringify(url);
