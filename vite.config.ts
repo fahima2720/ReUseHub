@@ -12,24 +12,18 @@ export default (configEnv: ConfigEnv) => {
   const env = loadEnv(mode, process.cwd(), "");
   // Browser bundles cannot read Worker runtime bindings. Only these two public
   // values may fall back to the managed server bindings at build time.
+  // Some build environments inject them later, so never fail the build here;
+  // the generated client reports a clear error at runtime if they are missing.
   const url = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
-  const key = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    throw new Error("ReUseHub build requires the Lovable Cloud public URL and publishable key.");
-  }
-  if (key.startsWith("sb_secret_")) {
-    throw new Error("ReUseHub browser configuration requires a publishable key, not a secret key.");
-  }
+  const rawKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_PUBLISHABLE_KEY;
+  const key = rawKey && !rawKey.startsWith("sb_secret_") ? rawKey : undefined;
+  const define: Record<string, string> = {};
+  if (url) define["import.meta.env.VITE_SUPABASE_URL"] = JSON.stringify(url);
+  if (key) define["import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY"] = JSON.stringify(key);
   return defineConfig({
-    vite: {
-      define: {
-        "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(url),
-        "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(key),
-      },
-    },
+    vite: { define },
     tanstackStart: {
       // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-      // nitro/vite builds from this
       server: { entry: "server" },
     },
   })(configEnv);
