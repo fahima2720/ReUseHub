@@ -16,3 +16,4 @@
 - Listing photo rows and the legacy cover are synchronized through an owner/admin-scoped atomic RPC; retain the cover field for existing single-image consumers.
 - Group inquiry threads by listing and canonical participant pair without replacing message history; use participant-scoped reads and pagination.
 - Validate uploaded bytes in authenticated server functions; store optional listing PDFs privately and generate short-lived links on demand.
+- Build browser Cloud configuration from the two public URL/publishable bindings only, with a missing-value guard; never expose service-role bindings or edit generated clients to repair deployment configuration.

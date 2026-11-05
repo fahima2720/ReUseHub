@@ -1,5 +1,10 @@
 # ReUseHub finalization
 
+## Current connection repair
+- [x] Inspect Cloud health and refresh managed connection bindings without replacing data or generated integration files.
+- [x] Ensure browser builds include public connection settings and reject missing settings before deployment.
+- [x] Verify clean compilation, nine routing tests, homepage/browse/detail/sign-in, and real signed-in dashboard/profile/inbox/sell reads without runtime errors; hosted preview redirects the verification browser to Lovable login and remains unverified there.
+
 ## Presentation repairs
 - [ ] Repair keyword search, debounce, cancellation and pagination.
 - [ ] Align message validation and organize participant-only conversations.
