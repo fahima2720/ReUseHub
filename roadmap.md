@@ -1,5 +1,10 @@
 # ReUseHub finalization
 
+## Current connection repair
+- [x] Inspect Cloud health and refresh managed connection bindings without replacing data or generated integration files.
+- [x] Ensure browser builds include public connection settings and reject missing settings before deployment.
+- [ ] Verify current compilation, public pages, and real signed-in database reads; report hosted-preview authorization limits.
+
 ## Presentation repairs
 - [ ] Repair keyword search, debounce, cancellation and pagination.
 - [ ] Align message validation and organize participant-only conversations.
