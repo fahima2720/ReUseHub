@@ -13,9 +13,9 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "ReUseHub — Give Things a Second Life" },
-      { name: "description", content: "A local marketplace to sell pre-owned items or give usable things away for free." },
-      { property: "og:title", content: "ReUseHub — Give Things a Second Life" },
+      { title: "ReUseHub  Give Things a Second Life" },
+      { name: "description", content: "A local marketplace to sell pre owned items or give usable things away for free." },
+      { property: "og:title", content: "ReUseHub Give Things a Second Life" },
       { property: "og:description", content: "Sell pre-owned items or give them away for free to someone nearby." },
     ],
   }),
@@ -31,7 +31,7 @@ function Home() {
     <>
       <section className="container-page grid items-center gap-10 py-10 md:grid-cols-[1fr_1.1fr] md:py-16">
         <div>
-          <p className="mb-3 text-sm font-semibold text-primary">Local second-hand marketplace</p>
+          <p className="mb-3 text-sm font-semibold text-primary">Local second hand marketplace</p>
           <h1 className="text-4xl font-bold leading-[1.05] sm:text-5xl">Give things a second life.</h1>
           <p className="mt-4 max-w-md text-muted-foreground">
             Sell the things you no longer use, or give them away for free. Find good furniture, books and electronics from people near you.
