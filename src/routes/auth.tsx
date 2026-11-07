@@ -26,13 +26,15 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+export const passwordSchema = z.string().min(8, "Password must be at least 8 characters").max(72)
+  .regex(/[A-Za-z]/, "Include at least one letter").regex(/[0-9]/, "Include at least one number");
+
 export const signupSchema = z.object({
   full_name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
   email: z.string().trim().email("Enter a valid email").max(255),
   phone: z.string().trim().regex(/^[0-9+\- ]{7,20}$/, "Enter a valid phone number (7–20 digits)"),
   location: z.string().trim().max(80).optional(),
-  password: z.string().min(8, "Password must be at least 8 characters").max(72)
-    .regex(/[A-Za-z]/, "Include at least one letter").regex(/[0-9]/, "Include at least one number"),
+  password: passwordSchema,
 });
 
 const safeRedirect = (r?: string) => (r && r.startsWith("/") && !r.startsWith("//") ? r : "/dashboard");
@@ -106,7 +108,13 @@ function AuthPage() {
             </>
           )}
           <Field errors={errors} name="password" label="Password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required />
-          {mode === "signup" && <p className="text-xs text-muted-foreground">At least 8 characters with a letter and a number.</p>}
+          {mode === "signup" ? (
+            <p className="text-xs text-muted-foreground">At least 8 characters with a letter and a number.</p>
+          ) : (
+            <p className="text-right text-sm">
+              <Link to="/forgot-password" className="font-medium text-primary hover:underline">Forgot Password?</Link>
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
           </Button>
