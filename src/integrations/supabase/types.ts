@@ -296,6 +296,118 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_internal_note: boolean
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          admin_has_unread: boolean
+          assigned_admin_id: string | null
+          category: Database["public"]["Enums"]["support_category"]
+          created_at: string
+          description: string
+          id: string
+          related_listing_id: string | null
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at: string
+          user_has_unread: boolean
+          user_id: string
+        }
+        Insert: {
+          admin_has_unread?: boolean
+          assigned_admin_id?: string | null
+          category: Database["public"]["Enums"]["support_category"]
+          created_at?: string
+          description: string
+          id?: string
+          related_listing_id?: string | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at?: string
+          user_has_unread?: boolean
+          user_id: string
+        }
+        Update: {
+          admin_has_unread?: boolean
+          assigned_admin_id?: string | null
+          category?: Database["public"]["Enums"]["support_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          related_listing_id?: string | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["support_status"]
+          subject?: string
+          updated_at?: string
+          user_has_unread?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_assigned_admin_id_fkey"
+            columns: ["assigned_admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_related_listing_id_fkey"
+            columns: ["related_listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -334,6 +446,14 @@ export type Database = {
         }[]
       }
       admin_stats: { Args: never; Returns: Json }
+      admin_update_ticket: {
+        Args: {
+          _assign_to_me?: boolean
+          _status: Database["public"]["Enums"]["support_status"]
+          _ticket_id: string
+        }
+        Returns: undefined
+      }
       get_my_profile: {
         Args: never
         Returns: {
@@ -354,6 +474,7 @@ export type Database = {
       }
       inbox_conversations: { Args: { _offset?: number }; Returns: Json }
       mark_inquiry_read: { Args: { _id: string }; Returns: undefined }
+      mark_ticket_read: { Args: { _ticket_id: string }; Returns: undefined }
       save_listing_images: {
         Args: { _image_urls: string[]; _listing_id: string }
         Returns: undefined
@@ -391,6 +512,8 @@ export type Database = {
       listing_status: "available" | "reserved" | "sold"
       listing_type: "sale" | "donation"
       report_status: "pending" | "reviewed" | "dismissed"
+      support_category: "account" | "listing" | "report_user" | "bug" | "other"
+      support_status: "open" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -523,6 +646,8 @@ export const Constants = {
       listing_status: ["available", "reserved", "sold"],
       listing_type: ["sale", "donation"],
       report_status: ["pending", "reviewed", "dismissed"],
+      support_category: ["account", "listing", "report_user", "bug", "other"],
+      support_status: ["open", "in_progress", "resolved", "closed"],
     },
   },
 } as const

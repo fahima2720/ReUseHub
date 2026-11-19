@@ -35,6 +35,18 @@ export function SiteHeader() {
     },
   });
 
+  const supportUnread = useQuery({
+    queryKey: ["support-unread", user?.id],
+    enabled: !!user,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("user_has_unread", true);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setOpen(false);
@@ -57,6 +69,10 @@ export function SiteHeader() {
           <Link to="/inbox" className="nav-link flex items-center gap-1.5" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>
             Inbox
             {!!unread.data && <Badge aria-label={`${unread.data} unread messages`}>{unread.data}</Badge>}
+          </Link>
+          <Link to="/support" className="nav-link flex items-center gap-1.5" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>
+            Support
+            {!!supportUnread.data && <Badge aria-label={`${supportUnread.data} tickets with new replies`}>{supportUnread.data}</Badge>}
           </Link>
           <Link to="/profile" className="nav-link" activeProps={{ className: "text-primary" }} onClick={() => setOpen(false)}>Profile</Link>
         </>
@@ -139,6 +155,17 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const { user } = useAuth();
+  const supportUnread = useQuery({
+    queryKey: ["support-unread", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("user_has_unread", true);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
   return (
     <footer className="mt-24 border-t bg-card">
       <div className="container-page grid gap-8 py-12 sm:grid-cols-3">
@@ -152,6 +179,7 @@ export function SiteFooter() {
             <li><Link to="/browse" className="hover:text-foreground">Browse all items</Link></li>
             <li><Link to="/browse" search={{ type: "donation" }} className="hover:text-foreground">Free donations</Link></li>
             <li><Link to="/sell" className="hover:text-foreground">List an item</Link></li>
+            <li><Link to="/support" className="inline-flex items-center gap-1.5 hover:text-foreground">Help &amp; support{!!supportUnread.data && <Badge aria-label={`${supportUnread.data} tickets with new replies`}>{supportUnread.data}</Badge>}</Link></li>
           </ul>
         </div>
         <div className="text-sm">

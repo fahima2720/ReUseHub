@@ -102,6 +102,11 @@ function ItemPage() {
         <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">{l.description}</p>
         {user && <ListingAttachments listingId={l.id} editable={isOwner} />}
         {user && !isOwner && <ReportForm listingId={l.id} />}
+        {user && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Need help? <Link to="/support/new" search={{ listing: l.id }} className="font-medium text-primary underline-offset-4 hover:underline">Contact support</Link>
+          </p>
+        )}
       </section>
 
       {related.data && related.data.rows.filter((r) => r.id !== l.id).length > 0 && (

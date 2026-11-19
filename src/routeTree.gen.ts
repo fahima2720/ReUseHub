@@ -22,6 +22,9 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSellRouteImport } from './routes/_authenticated/sell'
 import { Route as ItemIdRouteImport } from './routes/item.$id'
 import { Route as AuthenticatedEditIdRouteImport } from './routes/_authenticated/edit.$id'
+import { Route as AuthenticatedSupportIndexRouteImport } from './routes/_authenticated/support.index'
+import { Route as AuthenticatedSupportIdRouteImport } from './routes/_authenticated/support.$id'
+import { Route as AuthenticatedSupportNewRouteImport } from './routes/_authenticated/support.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -87,6 +90,22 @@ const AuthenticatedEditIdRoute = AuthenticatedEditIdRouteImport.update({
   path: '/edit/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSupportIndexRoute =
+  AuthenticatedSupportIndexRouteImport.update({
+    id: '/support/',
+    path: '/support/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSupportIdRoute = AuthenticatedSupportIdRouteImport.update({
+  id: '/support/$id',
+  path: '/support/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSupportNewRoute = AuthenticatedSupportNewRouteImport.update({
+  id: '/support/new',
+  path: '/support/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +120,9 @@ export interface FileRoutesByFullPath {
   '/sell': typeof AuthenticatedSellRoute
   '/item/$id': typeof ItemIdRoute
   '/edit/$id': typeof AuthenticatedEditIdRoute
+  '/support/$id': typeof AuthenticatedSupportIdRoute
+  '/support/new': typeof AuthenticatedSupportNewRoute
+  '/support/': typeof AuthenticatedSupportIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -115,6 +137,9 @@ export interface FileRoutesByTo {
   '/sell': typeof AuthenticatedSellRoute
   '/item/$id': typeof ItemIdRoute
   '/edit/$id': typeof AuthenticatedEditIdRoute
+  '/support/$id': typeof AuthenticatedSupportIdRoute
+  '/support/new': typeof AuthenticatedSupportNewRoute
+  '/support': typeof AuthenticatedSupportIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +156,9 @@ export interface FileRoutesById {
   '/_authenticated/sell': typeof AuthenticatedSellRoute
   '/item/$id': typeof ItemIdRoute
   '/_authenticated/edit/$id': typeof AuthenticatedEditIdRoute
+  '/_authenticated/support/$id': typeof AuthenticatedSupportIdRoute
+  '/_authenticated/support/new': typeof AuthenticatedSupportNewRoute
+  '/_authenticated/support/': typeof AuthenticatedSupportIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +175,9 @@ export interface FileRouteTypes {
     | '/sell'
     | '/item/$id'
     | '/edit/$id'
+    | '/support/$id'
+    | '/support/new'
+    | '/support/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +192,9 @@ export interface FileRouteTypes {
     | '/sell'
     | '/item/$id'
     | '/edit/$id'
+    | '/support/$id'
+    | '/support/new'
+    | '/support'
   id:
     | '__root__'
     | '/'
@@ -176,6 +210,9 @@ export interface FileRouteTypes {
     | '/_authenticated/sell'
     | '/item/$id'
     | '/_authenticated/edit/$id'
+    | '/_authenticated/support/$id'
+    | '/_authenticated/support/new'
+    | '/_authenticated/support/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -281,6 +318,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEditIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/support/': {
+      id: '/_authenticated/support/'
+      path: '/support'
+      fullPath: '/support/'
+      preLoaderRoute: typeof AuthenticatedSupportIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/support/$id': {
+      id: '/_authenticated/support/$id'
+      path: '/support/$id'
+      fullPath: '/support/$id'
+      preLoaderRoute: typeof AuthenticatedSupportIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/support/new': {
+      id: '/_authenticated/support/new'
+      path: '/support/new'
+      fullPath: '/support/new'
+      preLoaderRoute: typeof AuthenticatedSupportNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -291,6 +349,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSellRoute: typeof AuthenticatedSellRoute
   AuthenticatedEditIdRoute: typeof AuthenticatedEditIdRoute
+  AuthenticatedSupportIdRoute: typeof AuthenticatedSupportIdRoute
+  AuthenticatedSupportNewRoute: typeof AuthenticatedSupportNewRoute
+  AuthenticatedSupportIndexRoute: typeof AuthenticatedSupportIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -300,6 +361,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSellRoute: AuthenticatedSellRoute,
   AuthenticatedEditIdRoute: AuthenticatedEditIdRoute,
+  AuthenticatedSupportIdRoute: AuthenticatedSupportIdRoute,
+  AuthenticatedSupportNewRoute: AuthenticatedSupportNewRoute,
+  AuthenticatedSupportIndexRoute: AuthenticatedSupportIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

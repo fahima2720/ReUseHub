@@ -29,3 +29,19 @@ export const profileSchema = z.object({
   phone: z.string().trim().regex(/^[0-9+\- ]{7,20}$/, "Enter a valid phone number (7–20 digits)"),
   location: z.string().trim().max(80).optional(),
 });
+export const supportCategories = ["account", "listing", "report_user", "bug", "other"] as const;
+export const supportCategoryLabel: Record<(typeof supportCategories)[number], string> = {
+  account: "Account", listing: "Listing", report_user: "Report a user", bug: "Bug", other: "Other",
+};
+export const supportStatusLabel: Record<"open" | "in_progress" | "resolved" | "closed", string> = {
+  open: "Open", in_progress: "In progress", resolved: "Resolved", closed: "Closed",
+};
+
+export const supportTicketSchema = z.object({
+  category: z.enum(supportCategories, { message: "Choose a category" }),
+  subject: z.string().trim().min(5, "Subject must be at least 5 characters").max(100, "Subject must be 100 characters or fewer"),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000, "Description must be 2,000 characters or fewer"),
+  related_listing_id: z.string().uuid().optional().or(z.literal("").transform(() => undefined)),
+});
+
+export const supportMessageSchema = z.string().trim().min(2, "Message must be at least 2 characters.").max(2000, "Message must be 2,000 characters or fewer.");
