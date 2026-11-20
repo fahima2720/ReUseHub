@@ -2,6 +2,18 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type SupportStatus = "open" | "in_progress" | "resolved" | "closed";
+export type SupportCategory = "account" | "listing" | "report_user" | "bug" | "other";
+
+export const adminTicketsQuery = () => queryOptions({
+  queryKey: ["admin", "support-tickets"],
+  queryFn: async () => {
+    const { data, error } = await supabase.from("support_tickets")
+      .select("id, subject, category, status, assigned_admin_id, admin_has_unread, updated_at")
+      .order("updated_at", { ascending: false }).limit(500);
+    if (error) throw error;
+    return data;
+  },
+});
 
 export const myTicketsQuery = (userId: string) => queryOptions({
   queryKey: ["support-tickets", userId],

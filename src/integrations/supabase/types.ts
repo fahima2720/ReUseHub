@@ -446,14 +446,24 @@ export type Database = {
         }[]
       }
       admin_stats: { Args: never; Returns: Json }
-      admin_update_ticket: {
-        Args: {
-          _assign_to_me?: boolean
-          _status: Database["public"]["Enums"]["support_status"]
-          _ticket_id: string
-        }
-        Returns: undefined
-      }
+      admin_update_ticket:
+        | {
+            Args: {
+              _assign_to_me?: boolean
+              _status: Database["public"]["Enums"]["support_status"]
+              _ticket_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _assign_to_me: boolean
+              _status: Database["public"]["Enums"]["support_status"]
+              _ticket_id: string
+              _unassign: boolean
+            }
+            Returns: undefined
+          }
       get_my_profile: {
         Args: never
         Returns: {

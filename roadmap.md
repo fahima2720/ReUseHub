@@ -28,3 +28,8 @@
 - [x] Add photo rows with existing-cover backfill and owner/admin permissions.
 - [x] Support up to five uploads, removal during editing, and item thumbnails.
 - [x] Verify five-photo create, thumbnail selection, sixth-photo rejection, cover removal and persistence; all existing covers have photo rows.
+
+## Admin help desk
+- [ ] Add the admin support tab, ticket filters, unread indicators, and open-ticket counts.
+- [ ] Add admin-only ticket assignment, status, and internal-note controls using existing protected policies/RPC.
+- [ ] Verify ticket access and support workflows without changing existing features.

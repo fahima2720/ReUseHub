@@ -11,9 +11,12 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { EmptyState, TypeBadge } from "@/components/listing-card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { LISTING_SELECT, formatDate, formatPrice, statusLabel, type ListingRow } from "@/lib/listings";
+import { adminTicketsQuery, statusVariant } from "@/lib/support";
+import { supportCategories, supportCategoryLabel, supportStatusLabel, type SupportStatus } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -56,11 +59,13 @@ function Admin() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="support" className="gap-2">Support <Badge variant="secondary">{openTicketCount}</Badge></TabsTrigger>
         </TabsList>
         <TabsContent value="listings"><ListingsTab /></TabsContent>
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="categories"><CategoriesTab /></TabsContent>
         <TabsContent value="reports"><ReportsTab /></TabsContent>
+        <TabsContent value="support"><SupportTab /></TabsContent>
       </Tabs>
     </div>
   );
@@ -75,9 +80,9 @@ function Stats() {
       return data as Record<string, number>;
     },
   });
-  const items = [["users", "Users"], ["listings", "Listings"], ["sale", "For sale"], ["donation", "Donations"], ["inquiries", "Inquiries"], ["pending_reports", "Pending reports"]];
+  const items = [["users", "Users"], ["listings", "Listings"], ["sale", "For sale"], ["donation", "Donations"], ["inquiries", "Inquiries"], ["pending_reports", "Pending reports"], ["open_tickets", "Open tickets"]];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
       {items.map(([k, label]) => (
         <div key={k} className="rounded-lg border bg-card p-4">
           <p className="text-xs text-muted-foreground">{label}</p>
@@ -86,6 +91,53 @@ function Stats() {
       ))}
     </div>
   );
+}
+
+function SupportTab() {
+  const { user } = useAuth();
+  const q = useQuery(adminTicketsQuery());
+  const [status, setStatus] = useState("");
+  const [category, setCategory] = useState("");
+  const [assignment, setAssignment] = useState("");
+  const [search, setSearch] = useState("");
+  const rows = (q.data ?? []).filter((ticket) =>
+    (!status || ticket.status === status) &&
+    (!category || ticket.category === category) &&
+    (!assignment || (assignment === "mine" ? ticket.assigned_admin_id === user?.id : ticket.assigned_admin_id === null)) &&
+    ticket.subject.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
+  );
+  const openCount = (q.data ?? []).filter((ticket) => ticket.status === "open" || ticket.status === "in_progress").length;
+
+  return <div className="mt-4 space-y-4">
+    <p className="text-sm text-muted-foreground">{openCount} open tickets</p>
+    <div className="flex flex-wrap gap-2">
+      <Input aria-label="Search ticket titles" placeholder="Search ticket titles" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+      <select aria-label="Filter tickets by status" value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 rounded-md border bg-card px-2 text-sm">
+        <option value="">All statuses</option>
+        {(Object.keys(supportStatusLabel) as SupportStatus[]).map((value) => <option key={value} value={value}>{supportStatusLabel[value]}</option>)}
+      </select>
+      <select aria-label="Filter tickets by category" value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 rounded-md border bg-card px-2 text-sm">
+        <option value="">All categories</option>
+        {supportCategories.map((value) => <option key={value} value={value}>{supportCategoryLabel[value]}</option>)}
+      </select>
+      <select aria-label="Filter tickets by assignment" value={assignment} onChange={(e) => setAssignment(e.target.value)} className="h-9 rounded-md border bg-card px-2 text-sm">
+        <option value="">Any assignment</option><option value="mine">Assigned to me</option><option value="unassigned">Unassigned</option>
+      </select>
+    </div>
+    {q.isPending ? <Skeleton className="h-32" /> : q.isError ? <div className="space-y-2"><p className="text-sm text-muted-foreground">Couldn't load support tickets.</p><Button variant="outline" onClick={() => q.refetch()}>Try again</Button></div>
+      : rows.length === 0 ? <EmptyState title="No matching tickets" body="Try changing the filters or search." /> : <ul className="divide-y rounded-lg border bg-card">
+        {rows.map((ticket) => <li key={ticket.id}>
+          <Link to="/support/$id" params={{ id: ticket.id }} className="flex items-center gap-3 p-4 hover:bg-accent/50">
+            <span className={`size-2 shrink-0 rounded-full ${ticket.admin_has_unread ? "bg-primary" : "bg-transparent"}`} aria-label={ticket.admin_has_unread ? "Unread ticket" : undefined} />
+            <span className="min-w-0 flex-1">
+              <span className="flex flex-wrap items-center gap-2 font-medium">{ticket.subject}{ticket.admin_has_unread && <Badge variant="default">Unread</Badge>}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{supportCategoryLabel[ticket.category]} · {ticket.assigned_admin_id === user?.id ? "Assigned to you" : ticket.assigned_admin_id ? "Assigned" : "Unassigned"} · Updated {formatDate(ticket.updated_at)}</span>
+            </span>
+            <Badge variant={statusVariant(ticket.status)}>{supportStatusLabel[ticket.status]}</Badge>
+          </Link>
+        </li>)}
+      </ul>}
+  </div>;
 }
 
 const tableCls = "w-full min-w-[40rem] text-left text-sm [&_th]:px-3 [&_th]:py-2 [&_th]:font-medium [&_th]:text-muted-foreground [&_td]:px-3 [&_td]:py-2.5 [&_tr]:border-b";
