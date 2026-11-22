@@ -15,8 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { LISTING_SELECT, formatDate, formatPrice, statusLabel, type ListingRow } from "@/lib/listings";
-import { adminTicketsQuery, statusVariant } from "@/lib/support";
-import { supportCategories, supportCategoryLabel, supportStatusLabel, type SupportStatus } from "@/lib/validation";
+import { adminTicketsQuery, statusVariant, type SupportStatus } from "@/lib/support";
+import { supportCategories, supportCategoryLabel, supportStatusLabel } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -46,6 +46,16 @@ function Confirm({ label, title, body, onConfirm }: { label: string; title: stri
 
 function Admin() {
   const { isAdmin, loading } = useAuth();
+  const stats = useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_stats");
+      if (error) throw error;
+      return data as Record<string, number>;
+    },
+    enabled: isAdmin,
+  });
+  const openTicketCount = stats.data?.open_tickets ?? 0;
   if (loading) return <div className="container-page py-10"><Skeleton className="h-64" /></div>;
   if (!isAdmin)
     return <div className="container-page py-10"><EmptyState title="Admins only" body="You don't have permission to view this page." /></div>;
