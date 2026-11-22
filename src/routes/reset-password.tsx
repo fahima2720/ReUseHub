@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/components/password-field";
 import { supabase } from "@/integrations/supabase/client";
 import { passwordSchema } from "./auth";
 
@@ -27,9 +25,6 @@ function ResetPasswordPage() {
   const [status, setStatus] = useState<Status>("checking");
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
   useEffect(() => {
     let settled = false;
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -97,8 +92,8 @@ function ResetPasswordPage() {
           <>
             <p className="mt-1 text-sm text-muted-foreground">Choose a new password for your account.</p>
             <form onSubmit={onSubmit} noValidate className="mt-6 space-y-4">
-              <PasswordField name="password" label="New Password" show={showNew} onToggle={() => setShowNew((v) => !v)} error={errors.password} autoComplete="new-password" />
-              <PasswordField name="confirm" label="Confirm New Password" show={showConfirm} onToggle={() => setShowConfirm((v) => !v)} error={errors.confirm} autoComplete="new-password" />
+              <PasswordField name="password" label="New Password" error={errors.password} autoComplete="new-password" required />
+              <PasswordField name="confirm" label="Confirm New Password" error={errors.confirm} autoComplete="new-password" required />
               <p className="text-xs text-muted-foreground">At least 8 characters with a letter and a number.</p>
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? "Updating…" : "Reset Password"}
@@ -107,25 +102,6 @@ function ResetPasswordPage() {
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-function PasswordField({ name, label, show, onToggle, error, autoComplete }: {
-  name: string; label: string; show: boolean; onToggle: () => void; error?: string; autoComplete?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={name}>{label}</Label>
-      <div className="relative">
-        <Input id={name} name={name} type={show ? "text" : "password"} required autoComplete={autoComplete}
-          aria-invalid={!!error} aria-describedby={error ? `${name}-err` : undefined} className="pr-10" />
-        <button type="button" onClick={onToggle} aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground">
-          {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-      {error && <p id={`${name}-err`} className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }

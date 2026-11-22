@@ -17,3 +17,4 @@
 - Group inquiry threads by listing and canonical participant pair without replacing message history; use participant-scoped reads and pagination.
 - Validate uploaded bytes in authenticated server functions; store optional listing PDFs privately and generate short-lived links on demand.
 - Build browser Cloud configuration from the two public URL/publishable bindings only, never failing the build when absent (the client guards at runtime); never expose service-role bindings.
+- Keep visibility-controlled password inputs in the shared `src/components/password-field.tsx` component, with visibility state owned by the component so authentication and recovery forms stay consistent.

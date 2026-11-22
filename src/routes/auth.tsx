@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/components/password-field";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
@@ -107,7 +108,7 @@ function AuthPage() {
               <Field errors={errors} name="location" label="Location (optional)" autoComplete="address-level2" placeholder="e.g. Mirpur, Dhaka" />
             </>
           )}
-          <Field errors={errors} name="password" label="Password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required />
+          <PasswordField name="password" label="Password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required error={errors.password} />
           {mode === "signup" ? (
             <p className="text-xs text-muted-foreground">At least 8 characters with a letter and a number.</p>
           ) : (
