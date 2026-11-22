@@ -30,3 +30,33 @@ export const uploadListingFile = createServerFn({ method: "POST" })
     url.host = origin.host;
     return { path, url: url.toString() };
   });
+
+export const createListingAttachmentSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { attachmentId: string }) => {
+    if (!input || typeof input.attachmentId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.attachmentId)) {
+      throw new Error("Document unavailable.");
+    }
+    return { attachmentId: input.attachmentId };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: attachment, error: lookupError } = await context.supabase
+      .from("listing_attachments")
+      .select("storage_path")
+      .eq("id", data.attachmentId)
+      .maybeSingle();
+    if (lookupError || !attachment) throw new Error("Document unavailable.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error: signError } = await supabaseAdmin
+      .storage.from("listing-documents").createSignedUrl(attachment.storage_path, 300);
+    if (signError || !signed?.signedUrl) throw new Error("Document unavailable.");
+
+    const hosted = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    if (!hosted) throw new Error("Document unavailable.");
+    const url = new URL(signed.signedUrl);
+    const origin = new URL(hosted);
+    url.protocol = origin.protocol;
+    url.host = origin.host;
+    return { url: url.toString() };
+  });

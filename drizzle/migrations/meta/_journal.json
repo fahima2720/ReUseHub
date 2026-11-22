@@ -50,6 +50,13 @@
       "when": 1795152777021,
       "tag": "0006_support_ticket_admin_unassign",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795349632839,
+      "tag": "0007_tighten_profile_and_file_reads",
+      "breakpoints": true
     }
   ]
 }

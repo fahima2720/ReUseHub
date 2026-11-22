@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { validateUpload } from "@/lib/uploads";
-import { uploadListingFile } from "@/lib/uploads.functions";
+import { createListingAttachmentSignedUrl, uploadListingFile } from "@/lib/uploads.functions";
 
 export function ListingAttachments({ listingId, editable = false }: { listingId: string; editable?: boolean }) {
   const qc = useQueryClient();
@@ -23,9 +23,12 @@ export function ListingAttachments({ listingId, editable = false }: { listingId:
     {q.data?.map((file) => <div key={file.id} className="flex flex-wrap items-center gap-2 text-sm">
       <span className="min-w-0 break-all">{file.filename} · {(file.size_bytes / 1024).toFixed(1)} KB</span>
       <Button type="button" variant="outline" size="sm" onClick={async () => {
-        const { data, error } = await supabase.storage.from("listing-documents").createSignedUrl(file.storage_path, 300);
-        if (error) return toast.error("Couldn't open PDF. Please try again.");
-        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+        try {
+          const { url } = await createListingAttachmentSignedUrl({ data: { attachmentId: file.id } });
+          window.open(url, "_blank", "noopener,noreferrer");
+        } catch {
+          toast.error("Couldn't open PDF. Please try again.");
+        }
       }}>Open PDF</Button>
       {editable && <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={async () => {
         setBusy(true);
